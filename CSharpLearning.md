@@ -41,3 +41,36 @@ Ordering a custom cake:
 - You place the order (create `Lazy<T>`), but the bakery doesn’t bake until needed.
 - The first person who asks triggers the baking.
 - Everyone else gets slices from the same cake.
+
+## LINQ trap: `Count` for “more than N”
+
+If you only need to know **whether there are more than $N$ matches**, `Count` is a poor fit for large sequences because it **must scan the entire sequence**.
+
+### Prefer early-exit logic
+
+```csharp
+public static bool HasMoreThan10Active(IEnumerable<LinqTrap.Order> orders)
+{
+    if (orders is null)
+        throw new ArgumentNullException(nameof(orders));
+
+    var activeCount = 0;
+    foreach (var order in orders)
+    {
+        if (!order.IsActive)
+            continue;
+
+        activeCount++;
+        if (activeCount > 10)
+            return true;
+    }
+
+    return false;
+}
+```
+
+### Why not `Count`?
+
+- `Count` evaluates every element even after you’ve already found enough matches.
+- For huge sequences, the extra work is significant.
+- The loop short-circuits on the 11th match.
